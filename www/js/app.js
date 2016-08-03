@@ -45,7 +45,7 @@ angular.module('starter', ['ionic', 'ngCordova', 'starter.controllers', 'starter
     views: {
       'tab-dash': {
         templateUrl: 'templates/tab-dash.html',
-        controller: 'DashCtrl'
+        controller: 'ShareCtrl'
       }
     }
   })
@@ -68,8 +68,17 @@ angular.module('starter', ['ionic', 'ngCordova', 'starter.controllers', 'starter
         }
       }
     })
+    .state('tab.share', {
+      url: '/share',
+      views: {
+        'tab-share': {
+          templateUrl: 'templates/tab-share.html',
+          controller: 'ShareCtrl'
+        }
+      }
+    })
 
-  .state('tab.account', {
+    .state('tab.account', {
     url: '/account',
     views: {
       'tab-account': {
