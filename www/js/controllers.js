@@ -27,7 +27,7 @@ angular.module('starter.controllers', [])
   };
 })
 
-.controller('ShareCtrl', function($scope, $cordovaSocialSharing) {
+.controller('ShareCtrl', function($scope, $cordovaSocialSharing, $cordovaCamera) {
   console.log("share ctrl");
   var message = "Hey hey hey! I think you might be interested in this:";
   var subject = "Introduction from Agnes";
@@ -79,7 +79,7 @@ angular.module('starter.controllers', [])
       }, function(err) {
         // An error occurred. Show a message to the user
       });
-  }
+  };
 //   $cordovaSocialSharing
 //     .canShareVia(socialType, message, image, link)
 //     .then(function(result) {
@@ -95,4 +95,45 @@ angular.module('starter.controllers', [])
 //     }, function(err) {
 //       // Nope
 //     });
+
+
+  //=================================camera================
+  //http://ngcordova.com/docs/plugins/camera/
+  $scope.takephoto = function(){
+    console.log("take photo!");
+    var options = {
+      quality: 50,
+      destinationType: Camera.DestinationType.DATA_URL,
+      sourceType: Camera.PictureSourceType.CAMERA,
+      allowEdit: true,
+      encodingType: Camera.EncodingType.JPEG,
+      targetWidth: 300,
+      targetHeight: 300,
+      popoverOptions: CameraPopoverOptions,
+      saveToPhotoAlbum: false,
+      correctOrientation:true
+    };
+
+    $cordovaCamera.getPicture(options).then(function(imageData) {
+      $scope.imgURI = "data:image/jpeg;base64," + imageData;
+    }, function(err) {
+      console.log("error");
+      // error
+    });
+  }
+
+  // $scope.getphoto = function() {
+  //   var options = {
+  //     destinationType: Camera.DestinationType.FILE_URI,
+  //     sourceType: Camera.PictureSourceType.CAMERA,
+  //   };
+  //
+  //   $cordovaCamera.getPicture(options).then(function(imageURI) {
+  //     var image = document.getElementById('myImage');
+  //     image.src = imageURI;
+  //   }, function(err) {
+  //     // error
+  //   });
+  //   // $cordovaCamera.cleanup().then(...); // only for FILE_URI
+  // }
 });
