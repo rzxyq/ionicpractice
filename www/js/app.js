@@ -5,7 +5,7 @@
 // the 2nd parameter is an array of 'requires'
 // 'starter.services' is found in services.js
 // 'starter.controllers' is found in controllers.js
-angular.module('starter', ['ionic', 'ngCordova', 'starter.controllers', 'starter.services'])
+angular.module('starter', ['ionic', 'ngCordova', 'starter.controllers', 'starter.services','mlz.backbutton'])
 
 .run(function($ionicPlatform) {
   $ionicPlatform.ready(function() {
@@ -22,6 +22,52 @@ angular.module('starter', ['ionic', 'ngCordova', 'starter.controllers', 'starter
     }
   });
 })
+
+  .factory('OpenUrlService', ['$log', '$location', '$rootScope', '$ionicHistory', function ($log, $location, $rootScope, $ionicHistory) {
+
+    var openUrl = function (url) {
+
+      $log.debug('Handling open URL ' + url);
+
+      // Stop it from caching the first view as one to return when the app opens
+      $ionicHistory.nextViewOptions({
+        historyRoot: true,
+        disableBack: true,
+        disableAnimation: true
+      });
+
+      if (url) {
+        window.location.hash = url.substr(5);
+        $rootScope.$broadcast('handleopenurl', url);
+
+        window.cordova.removeDocumentEventHandler('handleopenurl');
+        window.cordova.addStickyDocumentEventHandler('handleopenurl');
+        document.removeEventListener('handleopenurl', handleOpenUrl);
+      }
+    };
+
+    var handleOpenUrl = function (e) {
+      console.log("event fired handle openurl!");
+      openUrl(e.url);
+    };
+
+    var onResume = function () {
+      document.addEventListener('handleopenurl', handleOpenUrl, false);
+    };
+
+    return {
+      handleOpenUrl: handleOpenUrl,
+      onResume: onResume
+    };
+
+  }])
+  .run(['OpenUrlService', function (OpenUrlService) {
+    if (OpenUrlService) {
+      document.addEventListener('handleopenurl', OpenUrlService.handleOpenUrl, false);
+      document.addEventListener('resume', OpenUrlService.onResume, false);
+    }
+  }])
+
 
 .config(function($stateProvider, $urlRouterProvider) {
 
@@ -94,3 +140,151 @@ angular.module('starter', ['ionic', 'ngCordova', 'starter.controllers', 'starter
   $urlRouterProvider.otherwise('/tab/dash');
 
 });
+
+
+
+//=======================================custom url======================
+
+if ('cordova' in window) {
+  // Create a sticky event for handling the app being opened via a custom URL
+  cordova.addStickyDocumentEventHandler('handleopenurl');
+}
+
+
+function handleOpenURL(url) {
+  setTimeout(function() {
+    alert("received url3: " + url);
+    window.localStorage.setItem("external_load", url);
+    cordova.fireDocumentEvent('handleopenurl', { url: url });
+
+  }, 0);
+}
+
+
+var BackButtonCtrl = function ($scope, $log, $state, $ionicHistory, $ionicViewSwitcher) {
+
+  var ctrl = this;
+
+  /**
+   * Checks to see if there is a view to navigate back to
+   * if we have no current back view.
+   *
+   * @param  {string} state The current view state
+   * @return {boolean}      If there is a view we should navigate back to
+   */
+  this.canGoBack = function (state) {
+
+    if (!state) {
+      state = $ionicHistory.currentStateName();
+    }
+
+    var states = state.split('/');
+
+    if (states.length > 1 && !$ionicHistory.backView())  {
+      states.pop();
+      ctrl.toState = states.join('/');
+      return true;
+    }
+    return false;
+  };
+
+  $scope.state = {
+    show: true,
+    previousState: ''
+  };
+
+  $scope.goBack = function () {
+
+    // check we can go back first
+    if (!ctrl.canGoBack()) {
+      return false;
+    }
+
+    // Switch this animation around so it looks like we're navigating backwards
+    $ionicViewSwitcher.nextDirection('back');
+
+    // Stop it from caching this view as one to return to
+    $ionicHistory.nextViewOptions({
+      historyRoot: true,
+      disableBack: true
+    });
+
+    // Switch to our new previous state
+    $state.go(ctrl.toState, $state.params);
+  };
+
+  $scope.state.show = ctrl.canGoBack();
+
+  $scope.$on('$stateChangeStart', function (e, to) {
+    $scope.state.show = ctrl.canGoBack(to.name);
+  });
+};
+
+var BackButtonDirective = function () {
+  return {
+    restrict: 'E',
+    replace: true,
+    controller: 'MlzBackButtonCtrl',
+    template: [
+      '<ion-nav-buttons> ',
+      '<button class="button back-button mlz-back-button buttons button-clear header-item" ng-if="state.show" ng-click="goBack()">',
+      '<i class="icon ion-ios7-arrow-back"></i>',
+      '<span class="back-text">',
+      '<span class="default-title">Back</span>',
+      '</span>',
+      '</button>',
+      '</ion-nav-buttons>'
+    ].join('')
+  };
+};
+
+
+
+angular.module('mlz.backbutton', ['ionic'])
+  .controller('BackButtonCtrl', ['$scope', '$log', '$state', '$ionicHistory', '$ionicViewSwitcher', BackButtonCtrl])
+  .directive('mlzBackButton', [BackButtonDirective]);
+
+angular.module('mlz.openurl', [])
+  .factory('OpenUrlService', ['$log', '$location', '$rootScope', '$ionicHistory', function ($log, $location, $rootScope, $ionicHistory) {
+
+    var openUrl = function (url) {
+
+      $log.debug('Handling open URL ' + url);
+
+      // Stop it from caching the first view as one to return when the app opens
+      $ionicHistory.nextViewOptions({
+        historyRoot: true,
+        disableBack: true,
+        disableAnimation: true
+      });
+
+      if (url) {
+        window.location.hash = url.substr(5);
+        $rootScope.$broadcast('handleopenurl', url);
+
+        window.cordova.removeDocumentEventHandler('handleopenurl');
+        window.cordova.addStickyDocumentEventHandler('handleopenurl');
+        document.removeEventListener('handleopenurl', handleOpenUrl);
+      }
+    };
+
+    var handleOpenUrl = function (e) {
+      console.log("event fired handle openurl!");
+      openUrl(e.url);
+    };
+
+    var onResume = function () {
+      document.addEventListener('handleopenurl', handleOpenUrl, false);
+    };
+
+    return {
+      handleOpenUrl: handleOpenUrl,
+      onResume: onResume
+    };
+
+  }]).run(['OpenUrlService', function (OpenUrlService) {
+  if (OpenUrlService) {
+    document.addEventListener('handleopenurl', OpenUrlService.handleOpenUrl, false);
+    document.addEventListener('resume', OpenUrlService.onResume, false);
+  }
+}]);
